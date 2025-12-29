@@ -1,0 +1,31 @@
+name: Daily Telegram Schedule
+
+on:
+  schedule:
+    # Запуск каждый день в 06:00 UTC (это 08:00 по Киеву зимой)
+    - cron: '0 6 * * *'
+  workflow_dispatch: # Позволяет запустить вручную кнопкой в GitHub
+
+jobs:
+  send_message:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          pip install python-telegram-bot[job-queue] pytz python-dotenv
+
+      - name: Run script
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TIMEZONE: "Europe/Kyiv"
+        run: python one_shot.py
+
