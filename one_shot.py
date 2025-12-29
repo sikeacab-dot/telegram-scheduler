@@ -197,7 +197,7 @@ def format_schedule(weekday_idx):
     for item in GROUPS_DATA:
         time = item["schedule"].get(day_str)
         if time:
-            body += f"🔹 Група: {item['group']}\n"
+            body += f"🔹 Група: <b>{item['group']}</b>\n"
             
             # Если в описании есть метка Telegram — используем её
             if item.get("description") == "Telegram":
@@ -237,7 +237,7 @@ async def main():
     print(f"Отправка расписания на день {weekday_idx}...")
     try:
         # Отправляем обычным текстом, чтобы избежать ошибок парсинга спецсимволов
-        await bot.send_message(chat_id=CHAT_ID, text=message)
+        await bot.send_message(chat_id=CHAT_ID, text=message, parse_mode="HTML")
         print("Успешно отправлено!")
     except Exception as e:
         print(f"Ошибка при отправке: {e}")
