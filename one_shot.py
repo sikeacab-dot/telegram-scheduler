@@ -2,7 +2,7 @@ import os
 import datetime
 import pytz
 import asyncio
-from telegram import Bot
+from telegram import Bot, LinkPreviewOptions
 
 # Настройки
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
@@ -237,7 +237,12 @@ async def main():
     print(f"Отправка расписания на день {weekday_idx}...")
     try:
         # Отправляем обычным текстом, чтобы избежать ошибок парсинга спецсимволов
-        await bot.send_message(chat_id=CHAT_ID, text=message, parse_mode="HTML")
+        await bot.send_message(
+            chat_id=CHAT_ID, 
+            text=message, 
+            parse_mode="HTML",
+            link_preview_options=LinkPreviewOptions(is_disabled=True)
+        )
         print("Успешно отправлено!")
     except Exception as e:
         print(f"Ошибка при отправке: {e}")
