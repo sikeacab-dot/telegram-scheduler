@@ -28,4 +28,3 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           TIMEZONE: "Europe/Kyiv"
         run: python one_shot.py
-
