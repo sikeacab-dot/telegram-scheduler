@@ -8,6 +8,8 @@ from telegram import Bot, LinkPreviewOptions
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 TIMEZONE_STR = os.getenv("TIMEZONE", "Europe/Kyiv")
+TARGET_HOUR = 8  # Целевой час отправки (08:00)
+TARGET_MINUTE = 0
 
 # Список всех групп и их расписания
 # Обозначения дней: "0": Понедельник, "1": Вторник, ... "6": Воскресенье
@@ -230,6 +232,24 @@ async def main():
     bot = Bot(token=TOKEN)
     tz = pytz.timezone(TIMEZONE_STR)
     now = datetime.datetime.now(tz)
+    
+    # === Логика точного времени ===
+    # Целевое время отправки сегодня
+    target_time = now.replace(hour=TARGET_HOUR, minute=TARGET_MINUTE, second=0, microsecond=0)
+    
+    # Если скрипт запущен раньше целевого времени (например, в 07:35), ждем
+    if now < target_time:
+        wait_seconds = (target_time - now).total_seconds()
+        print(f"Сейчас {now.strftime('%H:%M:%S')}. Ждем {wait_seconds:.0f} секунд до {TARGET_HOUR}:{TARGET_MINUTE:02d}...")
+        
+        # Ждем. Если ожидание больше часа (страховка), то скорее всего что-то не так, но мы ждем всё равно.
+        await asyncio.sleep(wait_seconds)
+        
+        # Обновляем время после сна
+        now = datetime.datetime.now(tz)
+    else:
+        print(f"Сейчас {now.strftime('%H:%M:%S')}. Время отправки {TARGET_HOUR}:{TARGET_MINUTE:02d} уже наступило или прошло. Отправляем сразу.")
+    # ==============================
     
     weekday_idx = now.weekday()
     message = format_schedule(weekday_idx)
