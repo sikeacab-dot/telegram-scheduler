@@ -2,8 +2,8 @@ name: Daily Telegram Schedule
 
 on:
   schedule:
-    # Запуск каждый день в 05:30 UTC (за 30 минут до целевого времени 08:00 по Киеву, чтобы компенсировать задержки GitHub Actions)
-    - cron: '30 5 * * *'
+    # Запуск каждый день в 04:00 UTC (06:00 по Киеву), чтобы иметь 2-часовой запас на задержки GitHub Actions
+    - cron: '0 4 * * *'
   workflow_dispatch: # Позволяет запустить вручную кнопкой в GitHub
 
 jobs:
@@ -27,4 +27,5 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           TIMEZONE: "Europe/Kyiv"
+          SEND_TIME: "08:00"
         run: python one_shot.py

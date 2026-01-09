@@ -2,14 +2,24 @@ import os
 import datetime
 import pytz
 import asyncio
-from telegram import Bot, LinkPreviewOptions
+from telegram import Bot
+try:
+    from telegram import LinkPreviewOptions
+except ImportError:
+    LinkPreviewOptions = None
 
 # Настройки
 TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 TIMEZONE_STR = os.getenv("TIMEZONE", "Europe/Kyiv")
-TARGET_HOUR = 8  # Целевой час отправки (08:00)
-TARGET_MINUTE = 0
+
+# Настройки времени отправки (по умолчанию 08:00)
+SEND_TIME = os.getenv("SEND_TIME", "08:00")
+try:
+    TARGET_HOUR, TARGET_MINUTE = map(int, SEND_TIME.split(':'))
+except (ValueError, AttributeError):
+    print(f"Предупреждение: Некорректный формат SEND_TIME '{SEND_TIME}'. Используем 08:00.")
+    TARGET_HOUR, TARGET_MINUTE = 8, 0
 
 # Список всех групп и их расписания
 # Обозначения дней: "0": Понедельник, "1": Вторник, ... "6": Воскресенье
@@ -237,18 +247,20 @@ async def main():
     # Целевое время отправки сегодня
     target_time = now.replace(hour=TARGET_HOUR, minute=TARGET_MINUTE, second=0, microsecond=0)
     
-    # Если скрипт запущен раньше целевого времени (например, в 07:35), ждем
+    print(f"Текущее время в {TIMEZONE_STR}: {now.strftime('%H:%M:%S')}")
+    print(f"Ожидаемое время отправки: {TARGET_HOUR:02d}:{TARGET_MINUTE:02d}")
+
+    # Если скрипт запущен раньше целевого времени, ждем
     if now < target_time:
         wait_seconds = (target_time - now).total_seconds()
-        print(f"Сейчас {now.strftime('%H:%M:%S')}. Ждем {wait_seconds:.0f} секунд до {TARGET_HOUR}:{TARGET_MINUTE:02d}...")
+        print(f"Ждем {wait_seconds:.0f} секунд до {TARGET_HOUR:02d}:{TARGET_MINUTE:02d}...")
         
-        # Ждем. Если ожидание больше часа (страховка), то скорее всего что-то не так, но мы ждем всё равно.
         await asyncio.sleep(wait_seconds)
         
         # Обновляем время после сна
         now = datetime.datetime.now(tz)
     else:
-        print(f"Сейчас {now.strftime('%H:%M:%S')}. Время отправки {TARGET_HOUR}:{TARGET_MINUTE:02d} уже наступило или прошло. Отправляем сразу.")
+        print("Время отправки уже наступило или прошло. Отправляем сразу.")
     # ==============================
     
     weekday_idx = now.weekday()
@@ -257,12 +269,17 @@ async def main():
     print(f"Отправка расписания на день {weekday_idx}...")
     try:
         # Отправляем обычным текстом, чтобы избежать ошибок парсинга спецсимволов
-        await bot.send_message(
-            chat_id=CHAT_ID, 
-            text=message, 
-            parse_mode="HTML",
-            link_preview_options=LinkPreviewOptions(is_disabled=True)
-        )
+        kwargs = {
+            "chat_id": CHAT_ID,
+            "text": message,
+            "parse_mode": "HTML"
+        }
+        if LinkPreviewOptions:
+            kwargs["link_preview_options"] = LinkPreviewOptions(is_disabled=True)
+        else:
+            kwargs["disable_web_page_preview"] = True
+            
+        await bot.send_message(**kwargs)
         print("Успешно отправлено!")
     except Exception as e:
         print(f"Ошибка при отправке: {e}")
