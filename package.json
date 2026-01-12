@@ -1,0 +1,14 @@
+{
+    "name": "telegram-scheduler",
+    "version": "1.0.0",
+    "description": "Daily Telegram schedule bot",
+    "main": "index.js",
+    "scripts": {
+        "start": "node index.js"
+    },
+    "dependencies": {
+        "telegraf": "^4.16.3",
+        "luxon": "^3.4.4",
+        "dotenv": "^16.4.1"
+    }
+}
