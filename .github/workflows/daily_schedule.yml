@@ -1,0 +1,30 @@
+name: Daily Telegram Schedule
+
+on:
+  schedule:
+    # Запуск каждый день в 04:30 UTC (06:30 по Киеву), чтобы иметь запас на задержки GitHub Actions
+    - cron: '30 4 * * *'
+  workflow_dispatch: # Позволяет запустить вручную кнопкой в GitHub
+
+jobs:
+  send_message:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run script
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TIMEZONE: "Europe/Kyiv"
+          SEND_TIME: "08:00"
+        run: node index.js
