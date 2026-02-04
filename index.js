@@ -255,7 +255,9 @@ async function main() {
     console.log(`Текущее время в ${TIMEZONE}: ${now.toFormat('HH:mm:ss')}`);
     console.log(`Ожидаемое время отправки: ${SEND_TIME}`);
 
-    if (now < targetTime) {
+    const isManualRun = process.env.GITHUB_EVENT_NAME === 'workflow_dispatch';
+
+    if (now < targetTime && !isManualRun) {
         const waitMs = targetTime.diff(now).as('milliseconds');
         console.log(`Ожидаем отправку...`);
         console.log(`- Сейчас: ${now.toFormat('HH:mm:ss')}`);
@@ -263,6 +265,8 @@ async function main() {
         console.log(`- Нужно подождать: ${Math.round(waitMs / 1000 / 60)} минут`);
 
         await new Promise(resolve => setTimeout(resolve, waitMs));
+    } else if (isManualRun && now < targetTime) {
+        console.log(`Ручной запуск: отправляем немедленно, не дожидаясь ${SEND_TIME}.`);
     } else {
         console.log(`Время отправки (${SEND_TIME}) уже наступило или прошло. Отправляем немедленно.`);
     }
