@@ -61,6 +61,9 @@ const GROUPS_DATA = [
         address: "вул. Межигірська 22 (вхід у дворі, под’їзд з цифрою п’ять)",
         description: "Якщо домофон не працює, зателефонуйте за номером:  380984170324, пошта: nachasi.nagroup.kyivbased@gmail.com",
         schedule: {
+               "0": "13:00", "1": "13:00", "2": "13:00", "3": "13:00-20:00",
+            "4": "13:00", "19:00", "5": "13:00", "6": "13:00"
+        },
 
         },
         directions: "https://youtube.com/shorts/Q7RRhGDwpTw?feature=share"
