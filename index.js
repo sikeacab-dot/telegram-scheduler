@@ -99,7 +99,7 @@ const GROUPS_DATA = [
     },
     {
         group: "Мayday online",
-        address: "https://t.me/maydayonline",
+        address: "https://t.me/mayday_NA_online",
         description: "Telegram",
         schedule: {
             "0": "8:00, 12:00-13:00, 21:00-22:15",
