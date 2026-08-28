@@ -9,10 +9,6 @@ const SEND_TIME = process.env.SEND_TIME || '08:00';
 
 const [TARGET_HOUR, TARGET_MINUTE] = SEND_TIME.split(':').map(Number);
 
-// Індексація: 
-// "0" — Понеділок, "1" — Вівторок, "2" — Середа, "3" — Четвер, 
-// "4" — П'ятниця, "5" — Субота, "6" — Неділя
-
 const GROUPS_DATA = [
     {
         group: "ВУАН (Ветерани України Анонімні Наркомани)",
@@ -274,7 +270,7 @@ const GROUPS_DATA = [
     }
 ];
 
-// Допоміжна функція для екранування HTML
+// Вспомогательная функция для экранирования HTML
 function escapeHTML(str) {
     if (!str) return '';
     return str
@@ -286,15 +282,17 @@ function escapeHTML(str) {
 }
 
 function formatSchedule(weekdayIdx) {
-    // Luxon weekday: 1 (Пн) .. 7 (Нд) -> Індекс: 0 (Пн) .. 6 (Нд)
-    const dayStr = String(weekdayIdx - 1);
+    // Luxon weekday returns 1 for Monday and 7 for Sunday.
+    // Python weekday() returns 0 for Monday and 6 for Sunday.
+    const pythonWeekday = weekdayIdx === 7 ? 6 : weekdayIdx - 1;
+    const pythonDayStr = String(pythonWeekday);
 
     const greeting = "🌞 Добрий ранок!";
     let message = `${greeting}\nРозклад зібрань на сьогодні:\n\n`;
     let body = "";
 
     for (const item of GROUPS_DATA) {
-        const time = item.schedule[dayStr];
+        const time = item.schedule[pythonDayStr];
         if (time) {
             body += `🔹 Група: <b>${escapeHTML(item.group)}</b>\n`;
 
@@ -327,13 +325,14 @@ function formatSchedule(weekdayIdx) {
 
 async function main() {
     if (!TOKEN || !CHAT_ID) {
-        console.error("Помилка: TELEGRAM_BOT_TOKEN або TELEGRAM_CHAT_ID не задані!");
+        console.error("Ошибка: TELEGRAM_BOT_TOKEN или TELEGRAM_CHAT_ID не заданы!");
         process.exit(1);
     }
 
     const bot = new Telegraf(TOKEN);
     const now = DateTime.now().setZone(TIMEZONE);
 
+    // Целевое время отправки сегодня
     const targetTime = now.set({
         hour: TARGET_HOUR,
         minute: TARGET_MINUTE,
@@ -341,39 +340,39 @@ async function main() {
         millisecond: 0
     });
 
-    console.log(`Поточний час у ${TIMEZONE}: ${now.toFormat('HH:mm:ss')}`);
-    console.log(`Очікуваний час відправки: ${SEND_TIME}`);
+    console.log(`Текущее время в ${TIMEZONE}: ${now.toFormat('HH:mm:ss')}`);
+    console.log(`Ожидаемое время отправки: ${SEND_TIME}`);
 
     const isManualRun = process.env.GITHUB_EVENT_NAME === 'workflow_dispatch';
 
     if (now < targetTime && !isManualRun) {
         const waitMs = targetTime.diff(now).as('milliseconds');
-        console.log(`Очікуємо відправку...`);
-        console.log(`- Зараз: ${now.toFormat('HH:mm:ss')}`);
-        console.log(`- Буде відправлено о: ${targetTime.toFormat('HH:mm:ss')}`);
-        console.log(`- Залишилось чекати: ${Math.round(waitMs / 1000 / 60)} хв.`);
+        console.log(`Ожидаем отправку...`);
+        console.log(`- Сейчас: ${now.toFormat('HH:mm:ss')}`);
+        console.log(`- Будет отправлено в: ${targetTime.toFormat('HH:mm:ss')}`);
+        console.log(`- Нужно подождать: ${Math.round(waitMs / 1000 / 60)} минут`);
 
         await new Promise(resolve => setTimeout(resolve, waitMs));
     } else if (isManualRun && now < targetTime) {
-        console.log(`Ручний запуск: відправляємо негайно, не чекаючи ${SEND_TIME}.`);
+        console.log(`Ручной запуск: отправляем немедленно, не дожидаясь ${SEND_TIME}.`);
     } else {
-        console.log(`Час відправки (${SEND_TIME}) вже настав або минув. Відправляємо негайно.`);
+        console.log(`Время отправки (${SEND_TIME}) уже наступило или прошло. Отправляем немедленно.`);
     }
 
     const finalNow = DateTime.now().setZone(TIMEZONE);
     const weekdayIdx = finalNow.weekday; // 1 (Mon) - 7 (Sun)
     const message = formatSchedule(weekdayIdx);
 
-    console.log(`Відправка розкладу (день тижня: ${weekdayIdx})...`);
+    console.log(`Отправка расписания (день недели: ${weekdayIdx})...`);
 
     try {
         await bot.telegram.sendMessage(CHAT_ID, message, {
             parse_mode: 'HTML',
             link_preview_options: { is_disabled: true }
         });
-        console.log("Повідомлення успішно відправлено!");
+        console.log("Сообщение успешно отправлено!");
     } catch (error) {
-        console.error("Помилка при відправці:", error);
+        console.error("Ошибка при отправке:", error);
         process.exit(1);
     }
 }
